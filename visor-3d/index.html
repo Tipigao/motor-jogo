@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+
+    <head>
+        <title>Visor 3D</title>
+
+        <link rel="stylesheet" href="css/bootstrap.min.css" />
+
+        <style>
+            canvas {
+                border: 1px solid gray;
+            }
+        </style>
+
+    </head>
+
+    <body>
+        <div class="container-fluid">
+
+            <div class="row">
+                <div class="col-8">
+                    <canvas id="areaDesenho"></canvas>
+                </div>
+                <div id="appControles" class="col-4">
+                    <div class="row">
+                        <div class="col-4 col-sm-12">
+                            <input type="file" @change="carregaMalha" />
+                        </div>
+                        <div class="col-4 col-sm-12 mt-1">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Fov</span>
+                                </div>
+                                <input type="range" min="1" max="90" value="1000" class="form-control" v-model="fov" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <script src="js/jquery.min.js"></script>
+        <script src="js/popper.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/vue.js"></script>
+
+        <script src="js/fn.js"></script>
+        <script src="cena3d.js"></script>
+        <script src="WavefrontObj.js"></script>
+        <script src="STL.js"></script>
+
+        <script type="text/javascript">
+            var app, cena;
+
+            $(document).ready(function() {
+
+                var c = document.getElementById('areaDesenho');
+
+                cena = new Cena3D(document.getElementById('areaDesenho'));
+
+                c.addEventListener("mousedown", function(event) {
+                    cena.ativaRotacao(event.button === 0, event.clientX, event.clientY);
+                });
+
+                window.addEventListener("mouseup", function(event) {
+                    cena.ativaRotacao(false);
+                });
+
+                window.addEventListener("mousemove", function(event) {
+                    cena.moveMouse(event.clientX, event.clientY);
+                });
+
+                c.addEventListener("wheel", function(event) {
+                    const delta = Math.sign(event.deltaY);
+                    console.log(delta);
+                    cena.distanciaZ += delta;
+                });
+
+                window.onresize = ajustaTamanhoTela;
+
+                ajustaTamanhoTela();
+
+                cena.inicializa();
+
+                criaAppControles();
+            });
+
+            function ajustaTamanhoTela() {
+                var c = document.getElementById('areaDesenho');
+
+                c.width = $(c).parent().width();
+                c.height = $(window).height() - 15;
+
+                cena.atualizaValoresCena();
+            }
+
+            function criaAppControles() {
+                app = new Vue({
+                    el: '#appControles',
+                    data: {
+                        fov: 90
+                    },
+                    watch: {
+                        fov: function(val) {
+                            cena.fov = val;
+                            cena.atualizaValoresCena();
+                        }
+                    },
+                    methods: {
+                        carregaMalha(event) {
+                            var file = event.target.files[0];
+                            var reader = new FileReader();
+                            reader.onloadend = function() {
+                                var conteudo = reader.result;
+                                cena.criaMalhaObj(file.name, conteudo);
+                            }
+                            if (file) {
+                                reader.readAsDataURL(file);
+                            }
+                        }
+                    }
+                })
+            }
+        </script>
+
+    </body>
+
+</html>
